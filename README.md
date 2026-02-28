@@ -1,44 +1,71 @@
-# dwmblocks
+# dwmblocks - Modular Status Bar
 
-Modular status bar for dwm written in c.
+Modular status bar for dwm. Each block runs an external script and can be updated independently via signals.
 
-# Modifying blocks
+## Status Blocks
 
-The statusbar is made from text output from commandline programs.  Blocks are
-added and removed by editing the config.h file.
+| Script | Update Interval | Signal | Description |
+|---|---|---|---|
+| `sb-shutdown` | Manual | `RTMIN+1` | Shutdown/power button |
+| `recordingicon` | Manual | `RTMIN+19` | Screen recording indicator |
+| `sb-record` | Manual | `RTMIN+2` | Recording status |
+| `sb-bluetooth` | 30s | `RTMIN+9` | Bluetooth status |
+| `sb-memory` | 5s | `RTMIN+14` | Memory usage |
+| `sb-cpu` | 2s | `RTMIN+18` | CPU usage |
+| `sb-volume` | Manual | `RTMIN+10` | Volume level |
+| `sb-battery` | 30s | `RTMIN+3` | Battery status |
+| `sb-clock` | 60s | `RTMIN+1` | Date and time |
+| `sb-internet` | 10s | `RTMIN+4` | Network/internet status |
 
-# Luke's build
+## Manual Signal Updates
 
-I have dwmblocks read my preexisting scripts
-[here in my dotfiles repo](https://github.com/LukeSmithxyz/voidrice/tree/master/.local/bin/statusbar).
-So if you want my build out of the box, download those and put them in your
-`$PATH`. I do this to avoid redundancy in LARBS, both i3 and dwm use the same
-statusbar scripts.
+Force-update a specific block by sending its signal:
 
-# Signaling changes
+```bash
+# Update volume block
+pkill -RTMIN+10 dwmblocks
 
-Most statusbars constantly rerun every script every several seconds to update.
-This is an option here, but a superior choice is giving your module a signal
-that you can signal to it to update on a relevant event, rather than having it
-rerun idly.
+# Update battery block
+pkill -RTMIN+3 dwmblocks
 
-For example, the audio module has the update signal 10 by default.  Thus,
-running `pkill -RTMIN+10 dwmblocks` will update it.
+# Update internet block
+pkill -RTMIN+4 dwmblocks
 
-You can also run `kill -44 $(pidof dwmblocks)` which will have the same effect,
-but is faster.  Just add 34 to your typical signal number.
+# Update bluetooth block
+pkill -RTMIN+9 dwmblocks
 
-My volume module *never* updates on its own, instead I have this command run
-along side my volume shortcuts in dwm to only update it when relevant.
+# Update memory block
+pkill -RTMIN+14 dwmblocks
 
-Note that all modules must have different signal numbers.
+# Update cpu block
+pkill -RTMIN+18 dwmblocks
+```
 
-# Clickable modules
+Alternatively, use `kill -$((34+SIGNAL)) $(pidof dwmblocks)` for faster updates.
 
-Like i3blocks, this build allows you to build in additional actions into your
-scripts in response to click events.  See the above linked scripts for examples
-of this using the `$BLOCK_BUTTON` variable.
+## Click Support
 
-For this feature to work, you need the appropriate patch in dwm as well. See
-[here](https://dwm.suckless.org/patches/statuscmd/).
-Credit for those patches goes to Daniel Bylinka (daniel.bylinka@gmail.com).
+Blocks support clickable actions via dwm's `sigdwmblocks` integration. The mouse button number is passed to scripts as `$BLOCK_BUTTON`:
+
+| Button | Value | Action |
+|---|---|---|
+| Left click | 1 | Primary action |
+| Middle click | 2 | Secondary action |
+| Right click | 3 | Tertiary action |
+| Scroll up | 4 | Increment |
+| Scroll down | 5 | Decrement |
+| Shift+Left click | 6 | Alternative action |
+
+## Configuration
+
+- Delimiter between blocks: two spaces
+- Scripts must be available in `$PATH`
+- Blocks with interval `0` only update on signal
+
+## Installation
+
+```
+sudo make install
+```
+
+Scripts (`sb-*`) must be installed separately and available in `$PATH`.
